@@ -52013,76 +52013,76 @@ Transform:
   - {fileID: 37298768}
   - {fileID: 1922945454}
   - {fileID: 1739178291}
+  - {fileID: 471762103}
   - {fileID: 1197382847}
   - {fileID: 396163337}
   - {fileID: 1838089688}
   - {fileID: 92584566}
   - {fileID: 263976241}
   - {fileID: 724187239}
-  - {fileID: 471762103}
   - {fileID: 1099250911}
   - {fileID: 1999614794}
   - {fileID: 2094734815}
+  - {fileID: 699715863}
   - {fileID: 810238402}
   - {fileID: 766735872}
   - {fileID: 1091129043}
   - {fileID: 753669633}
   - {fileID: 12825821}
   - {fileID: 29212026}
-  - {fileID: 439230502}
   - {fileID: 1227134347}
-  - {fileID: 699715863}
   - {fileID: 2061757723}
   - {fileID: 1952709682}
   - {fileID: 592325875}
-  - {fileID: 418035229}
+  - {fileID: 1189974733}
   - {fileID: 423250663}
-  - {fileID: 1063272822}
   - {fileID: 80023826}
   - {fileID: 426309156}
   - {fileID: 1670415582}
   - {fileID: 856142119}
+  - {fileID: 1076457388}
   - {fileID: 1442981583}
-  - {fileID: 2028598149}
+  - {fileID: 1382462550}
   - {fileID: 301963618}
-  - {fileID: 2002427929}
   - {fileID: 2032966087}
+  - {fileID: 1904149632}
   - {fileID: 115184814}
-  - {fileID: 1189974733}
+  - {fileID: 2028598149}
   - {fileID: 1288994300}
-  - {fileID: 2068791663}
+  - {fileID: 2002427929}
   - {fileID: 165226062}
   - {fileID: 9209568}
+  - {fileID: 2068791663}
   - {fileID: 135809920}
-  - {fileID: 842019630}
   - {fileID: 110651936}
-  - {fileID: 201949925}
-  - {fileID: 1904149632}
-  - {fileID: 1006127078}
+  - {fileID: 1447536146}
+  - {fileID: 1063272822}
   - {fileID: 1994381412}
-  - {fileID: 1932033624}
+  - {fileID: 439230502}
+  - {fileID: 1947100467}
   - {fileID: 410177437}
   - {fileID: 2075859086}
+  - {fileID: 1932033624}
+  - {fileID: 418035229}
   - {fileID: 2144409648}
-  - {fileID: 1947100467}
   - {fileID: 972744487}
-  - {fileID: 26282518}
-  - {fileID: 1382462550}
-  - {fileID: 1947465554}
-  - {fileID: 1076457388}
-  - {fileID: 85529608}
   - {fileID: 1436065536}
-  - {fileID: 1447536146}
+  - {fileID: 842019630}
+  - {fileID: 600998547}
+  - {fileID: 1006127078}
+  - {fileID: 1947465554}
+  - {fileID: 85529608}
+  - {fileID: 201949925}
+  - {fileID: 1526331434}
   - {fileID: 1131034342}
-  - {fileID: 1978084467}
   - {fileID: 1774556690}
+  - {fileID: 1978084467}
+  - {fileID: 26282518}
   - {fileID: 1625718140}
   - {fileID: 1253933682}
-  - {fileID: 1526331434}
-  - {fileID: 600998547}
   - {fileID: 507938917}
-  - {fileID: 588890618}
   - {fileID: 830936508}
+  - {fileID: 588890618}
   - {fileID: 1593609015}
   - {fileID: 528183326}
   - {fileID: 507913499}
@@ -79843,6 +79843,116 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4785699468478078640, guid: 92c8dce288ef6024eb1a12b7326c60d8, type: 3}
   m_PrefabInstance: {fileID: 2136176151}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2136394821
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2136394825}
+  - component: {fileID: 2136394824}
+  - component: {fileID: 2136394823}
+  - component: {fileID: 2136394822}
+  - component: {fileID: 2136394826}
+  m_Layer: 0
+  m_Name: Player Cube 2 Test
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &2136394822
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136394821}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &2136394823
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136394821}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &2136394824
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136394821}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &2136394825
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136394821}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 5.01}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 11
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2136394826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136394821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee2874cd85c9a0b429b1f122cdcb0875, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2136687402
 PrefabInstance:
   m_ObjectHideFlags: 0
