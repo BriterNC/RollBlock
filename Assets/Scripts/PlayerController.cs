@@ -6,23 +6,37 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    // Player Variables
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private ConstantForce cf;
+    [SerializeField] private bool isSpawned, isGroundInFront, isGroundOnLeft, isGroundOnBack, isGroundOnRight, isSliding;
+    [SerializeField] public bool firstLanded, isOnGround, isOnIce, isMoving, isUsingItem;
+    [SerializeField] private float playerScale = 0.9f;
+    
+    // Rotating Variables
+    [SerializeField] private int angularVelocity = 300;
+    private enum Directions
+    {
+        Forward,
+        Backward,
+        Left,
+        Right
+    }
+    
+    // Sliding Variables
+    [SerializeField] public KeyCode lastDirection;
+    
+    // Item Variables
+    [SerializeField] private Items currentItem;
     private enum Items
     {
         None, //0
         Jumper //1
     }
-    
-    [SerializeField] private Rigidbody rb;
-    [SerializeField] private ConstantForce cf;
-    [SerializeField] private bool isSpawned, isGroundInFront, isGroundOnLeft, isGroundOnBack, isGroundOnRight, isSliding;
-    [SerializeField] public bool firstLanded, isOnGround, isOnIce, isMoving, isUsingItem;
-    [SerializeField] private int angularVelocity = 300;
-    [SerializeField] private float playerScale = 0.9f;
-    [SerializeField] private Items currentItem;
-    [SerializeField] public KeyCode lastDirection;
 
     private void Awake()
     {
+        // Get Components from Player Cube then Spawn Player
         rb = GetComponent<Rigidbody>();
         cf = GetComponent<ConstantForce>();
         transform.localScale = Vector3.zero;
@@ -32,6 +46,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter()
     {
+        // If any collision is detected then Player is now landed and Unfreeze
         if (!firstLanded)
         {
             firstLanded = true;
@@ -39,6 +54,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // BUGGY AREA START
+    // Check ICE trigger for slipper movement
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Ice"))
@@ -81,7 +98,9 @@ public class PlayerController : MonoBehaviour
             isMoving = false;
         }
     }
-
+    // BUGGY AREA END
+    
+    // Drawing Raycast on Gizmos
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
@@ -104,11 +123,13 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        // Check if player is already spawned
         if (!isSpawned)
         {
             return;
         }
         
+        // Casting Raycast
         RaycastHit hit;
         
         if (Physics.Raycast(transform.position, transform.right, out hit, 0.5f))
@@ -180,26 +201,31 @@ public class PlayerController : MonoBehaviour
             isOnIce = false;
         }
         
+        // Check if player is landed
         if (!firstLanded)
         {
             return;
         }
         
+        // Check if the game is paused
         if (GameObject.FindWithTag("GameController").GetComponent<GameController>().isPaused)
         {
             return;
         }
         
+        // Check if Key R is Pressed
         if (Input.GetKey(KeyCode.R))
         {
             ResetCube();
         }
         
+        // Check if player is moving or isn't on ground
         if (isMoving || !isOnGround)
         {
             return;
         }
         
+        // Check if Key pressed WASD or Arrow keys for movement
         if ((Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) && !isGroundInFront)
         {
             FreezeRotationExcept("Z");
