@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private ConstantForce cf;
     [SerializeField] private bool isSpawned, isGroundInFront, isGroundOnLeft, isGroundOnBack, isGroundOnRight, isSliding;
-    [SerializeField] public bool firstLanded, isOnGround, isOnIce, isMoving, isUsingItem;
+    [SerializeField] public bool firstLanded, isOnGround, isOnIce, isMoving, isElevating, isUsingItem;
     [SerializeField] private float playerScale = 0.9f;
     
     // Rotating Variables
@@ -78,6 +78,10 @@ public class PlayerController : MonoBehaviour
             isMoving = true;
             Sliding();
         }
+        else if (other.CompareTag("Elevator"))
+        {
+            StartCoroutine(Elevate());
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -138,6 +142,14 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundOnBack = true;
             }
+            else if (hit.transform.CompareTag("Ice"))
+            {
+                isGroundOnBack = true;
+            }
+            else if (hit.transform.CompareTag("Elevator"))
+            {
+                isGroundOnBack = false;
+            }
         }
         else
         {
@@ -149,6 +161,14 @@ public class PlayerController : MonoBehaviour
             if (hit.transform.CompareTag("Ground"))
             {
                 isGroundInFront = true;
+            }
+            else if (hit.transform.CompareTag("Ice"))
+            {
+                isGroundInFront = true;
+            }
+            else if (hit.transform.CompareTag("Elevator"))
+            {
+                isGroundInFront = false;
             }
         }
         else
@@ -162,9 +182,13 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundOnLeft = true;
             }
-            if (hit.transform.CompareTag("Ice"))
+            else if (hit.transform.CompareTag("Ice"))
             {
-                Debug.Log("ICE ON LEFT!");
+                isGroundOnLeft = true;
+            }
+            else if (hit.transform.CompareTag("Elevator"))
+            {
+                isGroundOnLeft = false;
             }
         }
         else
@@ -177,6 +201,14 @@ public class PlayerController : MonoBehaviour
             if (hit.transform.CompareTag("Ground"))
             {
                 isGroundOnRight = true;
+            }
+            else if (hit.transform.CompareTag("Ice"))
+            {
+                isGroundOnRight = true;
+            }
+            else if (hit.transform.CompareTag("Elevator"))
+            {
+                isGroundOnRight = false;
             }
         }
         else
@@ -220,7 +252,7 @@ public class PlayerController : MonoBehaviour
         }
         
         // Check if player is moving or isn't on ground
-        if (isMoving || !isOnGround)
+        if (isMoving || !isOnGround || isElevating)
         {
             return;
         }
@@ -409,6 +441,31 @@ public class PlayerController : MonoBehaviour
             case ("Z"):
                 rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionY;
                 break;
+        }
+    }
+
+    private IEnumerator Elevate()
+    {
+        if (!isMoving)
+        {
+            isElevating = true;
+        
+            var timer = 0f;
+            var timeToElevate = 0.5f;
+            var tempPosition = transform.localPosition.y;
+
+            rb.useGravity = false;
+        
+            while (timer < timeToElevate)
+            {
+                timer += Time.deltaTime;
+                transform.localPosition = new Vector3(transform.localPosition.x, tempPosition + (timer / timeToElevate), transform.localPosition.z);
+                yield return null;
+            }
+
+            rb.useGravity = true;
+        
+            isElevating = false;
         }
     }
 }
