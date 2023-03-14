@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Ice
+  - Elevator
+  - Item
   layers:
   - Default
   - TransparentFX
