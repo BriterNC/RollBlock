@@ -18,13 +18,14 @@ public class ElevatorController : MonoBehaviour
         }
     }*/
 
-    private void OnDrawGizmos()
+    /*private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
         var pos = transform.position;
-            
+        
         Vector3 ray1 = transform.TransformDirection(Vector3.up) * 0.5f;
-    }
+        Gizmos.DrawRay(pos, ray1);
+    }*/
 
     private void FixedUpdate()
     {
