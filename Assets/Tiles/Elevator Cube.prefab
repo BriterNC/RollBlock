@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 5524575566566450054}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5524575568156535938}
@@ -208,6 +208,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Elevetor 01
       objectReference: {fileID: 0}
+    - target: {fileID: 1219471545100730, guid: d52eb6ca5ef43f149a8c3f91301e524d, type: 3}
+      propertyPath: m_TagString
+      value: Ground
+      objectReference: {fileID: 0}
     - target: {fileID: 4562075604489022, guid: d52eb6ca5ef43f149a8c3f91301e524d, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -312,6 +316,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4912010245623262, guid: 260a85a6c0f9d9043b33cbfab226e7bf, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 65740484214518740, guid: 260a85a6c0f9d9043b33cbfab226e7bf, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 65847666772590038, guid: 260a85a6c0f9d9043b33cbfab226e7bf, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

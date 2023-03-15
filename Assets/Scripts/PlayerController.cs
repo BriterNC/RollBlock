@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cinemachine;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,8 +10,8 @@ public class PlayerController : MonoBehaviour
     // Player Variables
     [SerializeField] private Rigidbody rb;
     [SerializeField] private ConstantForce cf;
-    [SerializeField] private bool isSpawned, isGroundInFront, isGroundOnLeft, isGroundOnBack, isGroundOnRight, isSliding;
-    [SerializeField] public bool firstLanded, isOnGround, isOnIce, isMoving, isElevating, isUsingItem;
+    [SerializeField] private bool isSpawning, isGroundInFront, isGroundOnLeft, isGroundOnBack, isGroundOnRight, isGroundOnUpperFront, isGroundOnUpperLeft, isGroundOnUpperBack, isGroundOnUpperRight, isSliding;
+    [SerializeField] public bool isOnGround, isMoving, isElevating, isUsingItem;
     [SerializeField] private float playerScale = 0.9f;
     
     // Rotating Variables
@@ -33,6 +34,17 @@ public class PlayerController : MonoBehaviour
         None, //0
         Jumper //1
     }
+    
+    // Camera Variables
+    [SerializeField] private CinemachineBrain mainCam;
+    [SerializeField] private GameObject virtualCam1, virtualCam2, virtualCam3, virtualCam4;
+    [SerializeField] private int activeCam = 1;
+    [SerializeField] private bool isChangingCamera;
+    private enum CameraRotation
+    {
+        Left, //0
+        Right //1
+    }
 
     private void Awake()
     {
@@ -44,15 +56,14 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(SpawnCube());
     }
 
-    private void OnCollisionEnter()
+    /*private void OnCollisionEnter()
     {
         // If any collision is detected then Player is now landed and Unfreeze
-        if (!firstLanded)
+        if (Co)
         {
-            firstLanded = true;
             UnlockFreeze();
         }
-    }
+    }*/
 
     // BUGGY AREA START
     // Check ICE trigger for slipper movement
@@ -68,7 +79,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnTriggerStay(Collider other)
+    /*private void OnTriggerStay(Collider other)
     {
         if (other.CompareTag("Ice"))
         {
@@ -82,7 +93,7 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(Elevate());
         }
-    }
+    }*/
 
     private void OnTriggerExit(Collider other)
     {
@@ -109,31 +120,31 @@ public class PlayerController : MonoBehaviour
     {
         Gizmos.color = Color.red;
         var pos = transform.position;
-            
+        
+        // 6 Sides axis raycast
         Vector3 ray1 = transform.TransformDirection(Vector3.right) * 0.5f;
         Vector3 ray2 = transform.TransformDirection(Vector3.left) * 0.5f;
         Vector3 ray3 = transform.TransformDirection(Vector3.forward) * 0.5f;
         Vector3 ray4 = transform.TransformDirection(Vector3.back) * 0.5f;
-        Vector3 ray5 = transform.TransformDirection(Vector3.down) * 1f;
+        Vector3 ray5 = transform.TransformDirection(Vector3.down) * 0.5f;
         Vector3 ray6 = transform.TransformDirection(Vector3.up) * 0.5f;
-        Gizmos.DrawRay(pos, ray1);
-        Gizmos.DrawRay(pos, ray2);
-        Gizmos.DrawRay(pos, ray3);
-        Gizmos.DrawRay(pos, ray4);
-        Gizmos.DrawRay(pos, ray5);
-        Gizmos.DrawRay(pos, ray5);
-        Gizmos.DrawRay(pos, ray6);
+        Gizmos.DrawRay(pos, ray1); // Back
+        Gizmos.DrawRay(pos, ray2); // Front
+        Gizmos.DrawRay(pos, ray3); // Right
+        Gizmos.DrawRay(pos, ray4); // Left
+        Gizmos.DrawRay(pos, ray5); // Under
+        Gizmos.DrawRay(pos, ray6); // Above
+        
+        // 4 Sides upper axis raycast
+        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray1); // Upper Back
+        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray2); // Upper Front
+        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray3); // Upper Right
+        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray4); // Upper Left
     }
 
     private void FixedUpdate()
     {
-        // Check if player is already spawned
-        if (!isSpawned)
-        {
-            return;
-        }
-        
-        // Casting Raycast
+        // 6 Sides axis raycast
         RaycastHit hit;
         
         if (Physics.Raycast(transform.position, transform.right, out hit, 0.5f))
@@ -142,6 +153,11 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundOnBack = true;
             }
+            else
+            {
+                isGroundOnBack = false;
+            }
+            /*
             else if (hit.transform.CompareTag("Ice"))
             {
                 isGroundOnBack = true;
@@ -149,7 +165,7 @@ public class PlayerController : MonoBehaviour
             else if (hit.transform.CompareTag("Elevator"))
             {
                 isGroundOnBack = false;
-            }
+            }*/
         }
         else
         {
@@ -162,14 +178,19 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundInFront = true;
             }
+            else
+            {
+                isGroundInFront = false;
+            }
+            /*
             else if (hit.transform.CompareTag("Ice"))
             {
-                isGroundInFront = true;
+                isGroundInFront = false;
             }
             else if (hit.transform.CompareTag("Elevator"))
             {
                 isGroundInFront = false;
-            }
+            }*/
         }
         else
         {
@@ -182,6 +203,10 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundOnLeft = true;
             }
+            else
+            {
+                isGroundOnLeft = false;
+            }/*
             else if (hit.transform.CompareTag("Ice"))
             {
                 isGroundOnLeft = true;
@@ -189,7 +214,7 @@ public class PlayerController : MonoBehaviour
             else if (hit.transform.CompareTag("Elevator"))
             {
                 isGroundOnLeft = false;
-            }
+            }*/
         }
         else
         {
@@ -202,6 +227,10 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundOnRight = true;
             }
+            else
+            {
+                isGroundOnRight = false;
+            }/*
             else if (hit.transform.CompareTag("Ice"))
             {
                 isGroundOnRight = true;
@@ -209,7 +238,7 @@ public class PlayerController : MonoBehaviour
             else if (hit.transform.CompareTag("Elevator"))
             {
                 isGroundOnRight = false;
-            }
+            }*/
         }
         else
         {
@@ -222,21 +251,85 @@ public class PlayerController : MonoBehaviour
             {
                 isOnGround = true;
             }
+            else
+            {
+                isOnGround = false;
+            }/*
             else if (hit.transform.CompareTag("Ice"))
             {
                 isOnIce = true;
-            }
+            }*/
         }
         else
         {
             isOnGround = false;
-            isOnIce = false;
+            //isOnIce = false;
         }
         
-        // Check if player is landed
-        if (!firstLanded)
+        // 4 Sides upper axis raycast
+        
+        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), transform.right, out hit, 0.5f))
         {
-            return;
+            if (hit.transform.CompareTag("Ground"))
+            {
+                isGroundOnUpperBack = true;
+            }
+            else
+            {
+                isGroundOnUpperBack = false;
+            }
+        }
+        else
+        {
+            isGroundOnUpperBack = false;
+        }
+        
+        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), -transform.right, out hit, 0.5f))
+        {
+            if (hit.transform.CompareTag("Ground"))
+            {
+                isGroundOnUpperFront = true;
+            }
+            else
+            {
+                isGroundOnUpperFront = false;
+            }
+        }
+        else
+        {
+            isGroundOnUpperFront = false;
+        }
+        
+        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), -transform.forward, out hit, 0.5f))
+        {
+            if (hit.transform.CompareTag("Ground"))
+            {
+                isGroundOnUpperLeft = true;
+            }
+            else
+            {
+                isGroundOnUpperLeft = false;
+            }
+        }
+        else
+        {
+            isGroundOnUpperLeft = false;
+        }
+        
+        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), transform.forward, out hit, 0.5f))
+        {
+            if (hit.transform.CompareTag("Ground"))
+            {
+                isGroundOnUpperRight = true;
+            }
+            else
+            {
+                isGroundOnUpperRight = false;
+            }
+        }
+        else
+        {
+            isGroundOnUpperRight = false;
         }
         
         // Check if the game is paused
@@ -252,44 +345,55 @@ public class PlayerController : MonoBehaviour
         }
         
         // Check if player is moving or isn't on ground
-        if (isMoving || !isOnGround || isElevating)
+        if (isSpawning || isMoving || !isOnGround || isChangingCamera || isElevating)
         {
             return;
         }
         
         // Check if Key pressed WASD or Arrow keys for movement
-        if ((Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) && !isGroundInFront)
+        if ((Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) && !isGroundInFront && !isGroundOnUpperFront)
         {
             FreezeRotationExcept("Z");
             lastDirection = KeyCode.W;
             StartCoroutine(Roll(Vector3.left));
         }
-        else if ((Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) && !isGroundOnLeft)
+        else if ((Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) && !isGroundOnLeft && !isGroundOnUpperLeft)
         {
             FreezeRotationExcept("X");
             lastDirection = KeyCode.A;
             StartCoroutine(Roll(Vector3.back));
         }
-        else if ((Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) && !isGroundOnBack)
+        else if ((Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) && !isGroundOnBack && !isGroundOnUpperBack)
         {
             FreezeRotationExcept("Z");
             lastDirection = KeyCode.S;
             StartCoroutine(Roll(Vector3.right));
         }
-        else if ((Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) && !isGroundOnRight)
+        else if ((Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) && !isGroundOnRight && !isGroundOnUpperRight)
         {
             FreezeRotationExcept("X");
             lastDirection = KeyCode.D;
             StartCoroutine(Roll(Vector3.forward));
         }
-        else if (Input.GetKey(KeyCode.Space) && !isUsingItem)
+        else if (Input.GetKey(KeyCode.Q))
+        {
+            StartCoroutine(RotateCamera(CameraRotation.Left));
+        }
+        else if (Input.GetKey(KeyCode.E))
+        {
+            StartCoroutine(RotateCamera(CameraRotation.Right));
+        }
+        /*else if (Input.GetKey(KeyCode.Space) && !isUsingItem)
         {
             StartCoroutine(UseItem());
-        }
+        }*/
     }
 
     private void ResetCube()
     {
+        transform.localScale = Vector3.zero;
+        currentItem = Items.None;
+        rb.useGravity = false;
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.inertiaTensor = Vector3.zero;
@@ -297,6 +401,7 @@ public class PlayerController : MonoBehaviour
         rb.centerOfMass = Vector3.zero;
         transform.rotation = Quaternion.Euler(Vector3.zero);
         transform.localPosition = Vector3.zero;
+        StartCoroutine(SpawnCube());
     }
 
     private void FreezeRotation()
@@ -327,6 +432,8 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator SpawnCube()
     {
+        isSpawning = true;
+        
         var secondToSpawn = 1f;
         var currentTimer = 0f;
         
@@ -339,9 +446,12 @@ public class PlayerController : MonoBehaviour
 
         transform.localScale = new Vector3(playerScale, playerScale, playerScale);
         rb.useGravity = true;
-        isSpawned = true;
+        isSpawning = false;
+        
+        UnlockFreeze();
     }
     
+    // Function to make player roll
     private IEnumerator Roll(Vector3 direction)
     {
         isMoving = true;
@@ -401,7 +511,7 @@ public class PlayerController : MonoBehaviour
         cf.force = direction * 15f;
     }
     
-    private IEnumerator UseItem()
+    /*private IEnumerator UseItem()
     {
         isUsingItem = true;
         
@@ -426,7 +536,7 @@ public class PlayerController : MonoBehaviour
         
         currentItem = Items.None;
         isUsingItem = false;
-    }
+    }*/
 
     private void FreezePositionExcept(string exceptAxis)
     {
@@ -443,8 +553,75 @@ public class PlayerController : MonoBehaviour
                 break;
         }
     }
+    
+    // Function to rotate side camera
+    private IEnumerator RotateCamera(CameraRotation side)
+    {
+        isChangingCamera = true;
+        
+        var timeToRotate = 1f;
+        var timer = 0f;
+        
+        virtualCam1.SetActive(false);
+        virtualCam2.SetActive(false);
+        virtualCam3.SetActive(false);
+        virtualCam4.SetActive(false);
+        
+        if (side == CameraRotation.Left)
+        {
+            switch (activeCam)
+            {
+                case(1):
+                    virtualCam2.SetActive(true);
+                    activeCam = 2;
+                    break;
+                case(2):
+                    virtualCam3.SetActive(true);
+                    activeCam = 3;
+                    break;
+                case(3):
+                    virtualCam4.SetActive(true);
+                    activeCam = 4;
+                    break;
+                case(4):
+                    virtualCam1.SetActive(true);
+                    activeCam = 1;
+                    break;
+            }
+        }
+        else if (side == CameraRotation.Right)
+        {
+            switch (activeCam)
+            {
+                case(1):
+                    virtualCam4.SetActive(true);
+                    activeCam = 4;
+                    break;
+                case(2):
+                    virtualCam1.SetActive(true);
+                    activeCam = 1;
+                    break;
+                case(3):
+                    virtualCam2.SetActive(true);
+                    activeCam = 2;
+                    break;
+                case(4):
+                    virtualCam3.SetActive(true);
+                    activeCam = 3;
+                    break;
+            }
+        }
+        
+        while (timer < timeToRotate)
+        {
+            timer += Time.deltaTime;
+            yield return null;
+        }
 
-    private IEnumerator Elevate()
+        isChangingCamera = false;
+    }
+
+    /*private IEnumerator Elevate()
     {
         if (!isMoving)
         {
@@ -467,5 +644,5 @@ public class PlayerController : MonoBehaviour
         
             isElevating = false;
         }
-    }
+    }*/
 }
