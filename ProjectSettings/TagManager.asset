@@ -8,6 +8,8 @@ TagManager:
   - Ice
   - Elevator
   - Item
+  - SlipStopper
+  - SlipDropper
   layers:
   - Default
   - TransparentFX

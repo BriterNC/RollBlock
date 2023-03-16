@@ -2,22 +2,48 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     // Player Variables
     [SerializeField] private Rigidbody rb;
     [SerializeField] private ConstantForce cf;
-    [SerializeField] private bool isSpawning, isGroundInFront, isGroundOnLeft, isGroundOnBack, isGroundOnRight, isGroundOnUpperFront, isGroundOnUpperLeft, isGroundOnUpperBack, isGroundOnUpperRight, isSliding;
-    [SerializeField] public bool isOnGround, isMoving, isElevating, isUsingItem;
+    [SerializeField] private bool 
+        isSpawning, 
+        isGroundOnFront, 
+        isGroundOnLeft, 
+        isGroundOnBack, 
+        isGroundOnRight, 
+        isGroundOnUpperFront, 
+        isGroundOnUpperLeft, 
+        isGroundOnUpperBack, 
+        isGroundOnUpperRight, 
+        isGroundAbove,
+        isOnGround, 
+        isSliding, 
+        isFalling, 
+        isMoving, 
+        groundIsIce
+        /*, isElevating, isUsingItem*/;
     [SerializeField] private float playerScale = 0.9f;
+    [SerializeField] private int rollCount;
+    [SerializeField] private TMP_Text rollCountText;
+    
+    // Raycast Variables
+    [SerializeField] private Transform raycastLocker;
+    [SerializeField] private RaycastHit _hit;
+    [SerializeField] private Vector3 positionRoundedYAxis, positionRoundedYUpperAxis;
+    [SerializeField] private Vector3 ray1, ray2, ray3, ray4, ray5, ray6;
     
     // Rotating Variables
     [SerializeField] private int angularVelocity = 300;
     private enum Directions
     {
+        None,
         Forward,
         Backward,
         Left,
@@ -25,15 +51,16 @@ public class PlayerController : MonoBehaviour
     }
     
     // Sliding Variables
-    [SerializeField] public KeyCode lastDirection;
+    [SerializeField] private Directions lastDirection;
+    [SerializeField] private float slidingSpeed = 10f;
     
     // Item Variables
-    [SerializeField] private Items currentItem;
+    /*[SerializeField] private Items currentItem;
     private enum Items
     {
         None, //0
         Jumper //1
-    }
+    }*/
     
     // Camera Variables
     [SerializeField] private CinemachineBrain mainCam;
@@ -42,114 +69,124 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool isChangingCamera;
     private enum CameraRotation
     {
-        Left, //0
-        Right //1
+        Left,
+        Right
     }
-
+    
+    // Rigidbody & ConstantForce & Item & Raycast Setter Initializer
     private void Awake()
     {
+        // Set Raycast direction based on RaycastLocker (prevent rotation)
+        ray1 = raycastLocker.TransformDirection(Vector3.right) * 0.5f;
+        ray2 = raycastLocker.TransformDirection(Vector3.left) * 0.5f;
+        ray3 = raycastLocker.TransformDirection(Vector3.forward) * 0.5f;
+        ray4 = raycastLocker.TransformDirection(Vector3.back) * 0.5f;
+        ray5 = raycastLocker.TransformDirection(Vector3.down) * 0.5f;
+        ray6 = raycastLocker.TransformDirection(Vector3.up) * 0.5f;
+        
         // Get Components from Player Cube then Spawn Player
         rb = GetComponent<Rigidbody>();
         cf = GetComponent<ConstantForce>();
         transform.localScale = Vector3.zero;
-        currentItem = Items.None;
+        //currentItem = Items.None;
         StartCoroutine(SpawnCube());
     }
-
-    /*private void OnCollisionEnter()
-    {
-        // If any collision is detected then Player is now landed and Unfreeze
-        if (Co)
-        {
-            UnlockFreeze();
-        }
-    }*/
-
-    // BUGGY AREA START
-    // Check ICE trigger for slipper movement
+    
+    // Check ICE trigger for slippery movement
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Ice"))
         {
-            rb.mass = 0.01f;
-            UnlockFreeze();
-            isSliding = true;
-            isMoving = true;
-            Sliding();
+            groundIsIce = true;
+        }
+        else if (other.CompareTag("SlipStopper"))
+        {
+            if (groundIsIce)
+            {
+                isSliding = false;
+                cf.force = Vector3.zero;
+                rb.velocity = Vector3.zero;
+                rb.useGravity = true;
+                transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
+            }
+            
+            if (isGroundAbove)
+            {
+                rb.constraints = RigidbodyConstraints.FreezeAll;
+                groundIsIce = true;
+                isSliding = false;
+                cf.force = Vector3.zero;
+                rb.velocity = Vector3.zero;
+                rb.useGravity = true;
+                transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
+                //return;
+            }
+            else
+            {
+                GetMovementWithActiveCamera(lastDirection);
+            }
+            
+            UnlockAllFreeze(); 
+            groundIsIce = false;
         }
     }
 
-    /*private void OnTriggerStay(Collider other)
+    /*private void OnCollisionEnter(Collision collision)
     {
-        if (other.CompareTag("Ice"))
+        if (collision.transform.CompareTag("Ground") && isSliding)
         {
-            rb.mass = 0.1f;
-            UnlockFreeze();
-            isSliding = true;
-            isMoving = true;
-            Sliding();
-        }
-        else if (other.CompareTag("Elevator"))
-        {
-            StartCoroutine(Elevate());
+            isSliding = false;
+            cf.force = Vector3.zero;
+            rb.velocity = Vector3.zero;
+            rb.useGravity = true;
+            transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
+            UnlockAllFreeze();
         }
     }*/
 
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Ice"))
-        {
-            rb.mass = 1f;
-            cf.force = Vector3.zero;
-            rb.velocity = Vector3.zero;
-            UnlockFreeze();
-            isSliding = false;
-            rb.angularVelocity = Vector3.zero;
-            rb.inertiaTensor = Vector3.zero;
-            rb.inertiaTensorRotation = Quaternion.Euler(Vector3.zero);
-            rb.centerOfMass = Vector3.zero;
-            transform.rotation = Quaternion.Euler(Vector3.zero);
-            transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
-            isMoving = false;
-        }
-    }
-    // BUGGY AREA END
+    // BUGGY AREA ENDED
     
-    // Drawing Raycast on Gizmos
+    // Drawing Raycast on Gizmos in Editor
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        var pos = transform.position;
-        
         // 6 Sides axis raycast
-        Vector3 ray1 = transform.TransformDirection(Vector3.right) * 0.5f;
-        Vector3 ray2 = transform.TransformDirection(Vector3.left) * 0.5f;
-        Vector3 ray3 = transform.TransformDirection(Vector3.forward) * 0.5f;
-        Vector3 ray4 = transform.TransformDirection(Vector3.back) * 0.5f;
-        Vector3 ray5 = transform.TransformDirection(Vector3.down) * 0.5f;
-        Vector3 ray6 = transform.TransformDirection(Vector3.up) * 0.5f;
-        Gizmos.DrawRay(pos, ray1); // Back
-        Gizmos.DrawRay(pos, ray2); // Front
-        Gizmos.DrawRay(pos, ray3); // Right
-        Gizmos.DrawRay(pos, ray4); // Left
-        Gizmos.DrawRay(pos, ray5); // Under
-        Gizmos.DrawRay(pos, ray6); // Above
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(positionRoundedYAxis, ray1); // Back
+        Gizmos.DrawRay(positionRoundedYAxis, ray2); // Front
+        Gizmos.DrawRay(positionRoundedYAxis, ray3); // Right
+        Gizmos.DrawRay(positionRoundedYAxis, ray4); // Left
+        Gizmos.DrawRay(positionRoundedYAxis, ray5); // Under
+        Gizmos.DrawRay(positionRoundedYAxis, ray6); // Above
         
         // 4 Sides upper axis raycast
-        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray1); // Upper Back
-        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray2); // Upper Front
-        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray3); // Upper Right
-        Gizmos.DrawRay(new Vector3(pos.x, pos.y + 1, pos.z), ray4); // Upper Left
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawRay(positionRoundedYUpperAxis, ray1); // Upper Back
+        Gizmos.DrawRay(positionRoundedYUpperAxis, ray2); // Upper Front
+        Gizmos.DrawRay(positionRoundedYUpperAxis, ray3); // Upper Right
+        Gizmos.DrawRay(positionRoundedYUpperAxis, ray4); // Upper Left
     }
 
     private void FixedUpdate()
     {
-        // 6 Sides axis raycast
-        RaycastHit hit;
+        // Drawing Raycast on in Game Scene
         
-        if (Physics.Raycast(transform.position, transform.right, out hit, 0.5f))
+        // Prevent Raycast from juggling
+        if (!isFalling)
         {
-            if (hit.transform.CompareTag("Ground"))
+            positionRoundedYAxis = new Vector3(transform.position.x, Mathf.RoundToInt(transform.position.y), transform.position.z);
+            positionRoundedYUpperAxis = new Vector3(positionRoundedYAxis.x, positionRoundedYAxis.y + 1, positionRoundedYAxis.z);
+        }
+        else if (isFalling)
+        {
+            positionRoundedYAxis = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+            positionRoundedYUpperAxis = new Vector3(positionRoundedYAxis.x, positionRoundedYAxis.y + 1, positionRoundedYAxis.z);
+        }
+        
+        // 6 Sides axis raycast
+        
+        if (Physics.Raycast(positionRoundedYAxis, ray1, out _hit, 0.5f))
+        {
+            if (_hit.transform.CompareTag("Ground"))
             {
                 isGroundOnBack = true;
             }
@@ -157,120 +194,102 @@ public class PlayerController : MonoBehaviour
             {
                 isGroundOnBack = false;
             }
-            /*
-            else if (hit.transform.CompareTag("Ice"))
-            {
-                isGroundOnBack = true;
-            }
-            else if (hit.transform.CompareTag("Elevator"))
-            {
-                isGroundOnBack = false;
-            }*/
         }
         else
         {
             isGroundOnBack = false;
         }
         
-        if (Physics.Raycast(transform.position, -transform.right, out hit, 0.5f))
+        if (Physics.Raycast(positionRoundedYAxis, ray2, out _hit, 0.5f))
         {
-            if (hit.transform.CompareTag("Ground"))
+            if (_hit.transform.CompareTag("Ground"))
             {
-                isGroundInFront = true;
+                isGroundOnFront = true;
             }
             else
             {
-                isGroundInFront = false;
+                isGroundOnFront = false;
             }
-            /*
-            else if (hit.transform.CompareTag("Ice"))
-            {
-                isGroundInFront = false;
-            }
-            else if (hit.transform.CompareTag("Elevator"))
-            {
-                isGroundInFront = false;
-            }*/
         }
         else
         {
-            isGroundInFront = false;
+            isGroundOnFront = false;
         }
         
-        if (Physics.Raycast(transform.position, -transform.forward, out hit, 0.5f))
+        if (Physics.Raycast(positionRoundedYAxis, ray3, out _hit, 0.5f))
         {
-            if (hit.transform.CompareTag("Ground"))
-            {
-                isGroundOnLeft = true;
-            }
-            else
-            {
-                isGroundOnLeft = false;
-            }/*
-            else if (hit.transform.CompareTag("Ice"))
-            {
-                isGroundOnLeft = true;
-            }
-            else if (hit.transform.CompareTag("Elevator"))
-            {
-                isGroundOnLeft = false;
-            }*/
-        }
-        else
-        {
-            isGroundOnLeft = false;
-        }
-        
-        if (Physics.Raycast(transform.position, transform.forward, out hit, 0.5f))
-        {
-            if (hit.transform.CompareTag("Ground"))
+            if (_hit.transform.CompareTag("Ground"))
             {
                 isGroundOnRight = true;
             }
             else
             {
                 isGroundOnRight = false;
-            }/*
-            else if (hit.transform.CompareTag("Ice"))
-            {
-                isGroundOnRight = true;
             }
-            else if (hit.transform.CompareTag("Elevator"))
-            {
-                isGroundOnRight = false;
-            }*/
         }
         else
         {
             isGroundOnRight = false;
         }
         
-        if (Physics.Raycast(transform.position, -transform.up, out hit, 0.5f))
+        if (Physics.Raycast(positionRoundedYAxis, ray4, out _hit, 0.5f))
         {
-            if (hit.transform.CompareTag("Ground"))
+            if (_hit.transform.CompareTag("Ground"))
+            {
+                isGroundOnLeft = true;
+            }
+            else
+            {
+                isGroundOnLeft = false;
+            }
+        }
+        else
+        {
+            isGroundOnLeft = false;
+        }
+        
+        if (Physics.Raycast(positionRoundedYAxis, ray5, out _hit, 0.5f))
+        {
+            if (_hit.transform.CompareTag("Ground"))
             {
                 isOnGround = true;
+                isFalling = false;
             }
             else
             {
                 isOnGround = false;
-            }/*
-            else if (hit.transform.CompareTag("Ice"))
-            {
-                isOnIce = true;
-            }*/
+                isFalling = true;
+                lastDirection = Directions.None;
+            }
         }
         else
         {
             isOnGround = false;
-            //isOnIce = false;
+            isFalling = true;
+            lastDirection = Directions.None;
+        }
+        
+        if (Physics.Raycast(positionRoundedYAxis, ray6, out _hit, 0.5f))
+        {
+            if (_hit.transform.CompareTag("Ground"))
+            {
+                isGroundAbove = true;
+            }
+            else
+            {
+                isGroundAbove = false;
+            }
+        }
+        else
+        {
+            isGroundAbove = false;
         }
         
         // 4 Sides upper axis raycast
         
-        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), transform.right, out hit, 0.5f))
+        if (Physics.Raycast(positionRoundedYUpperAxis, ray1, out _hit, 0.5f))
         {
-            if (hit.transform.CompareTag("Ground"))
+            if (_hit.transform.CompareTag("Ground"))
             {
                 isGroundOnUpperBack = true;
             }
@@ -284,9 +303,9 @@ public class PlayerController : MonoBehaviour
             isGroundOnUpperBack = false;
         }
         
-        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), -transform.right, out hit, 0.5f))
+        if (Physics.Raycast(positionRoundedYUpperAxis, ray2, out _hit, 0.5f))
         {
-            if (hit.transform.CompareTag("Ground"))
+            if (_hit.transform.CompareTag("Ground"))
             {
                 isGroundOnUpperFront = true;
             }
@@ -300,25 +319,9 @@ public class PlayerController : MonoBehaviour
             isGroundOnUpperFront = false;
         }
         
-        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), -transform.forward, out hit, 0.5f))
+        if (Physics.Raycast(positionRoundedYUpperAxis, ray3, out _hit, 0.5f))
         {
-            if (hit.transform.CompareTag("Ground"))
-            {
-                isGroundOnUpperLeft = true;
-            }
-            else
-            {
-                isGroundOnUpperLeft = false;
-            }
-        }
-        else
-        {
-            isGroundOnUpperLeft = false;
-        }
-        
-        if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), transform.forward, out hit, 0.5f))
-        {
-            if (hit.transform.CompareTag("Ground"))
+            if (_hit.transform.CompareTag("Ground"))
             {
                 isGroundOnUpperRight = true;
             }
@@ -332,49 +335,185 @@ public class PlayerController : MonoBehaviour
             isGroundOnUpperRight = false;
         }
         
+        if (Physics.Raycast(positionRoundedYUpperAxis, ray4, out _hit, 0.5f))
+        {
+            if (_hit.transform.CompareTag("Ground"))
+            {
+                isGroundOnUpperLeft = true;
+            }
+            else
+            {
+                isGroundOnUpperLeft = false;
+            }
+        }
+        else
+        {
+            isGroundOnUpperLeft = false;
+        }
+
         // Check if the game is paused
         if (GameObject.FindWithTag("GameController").GetComponent<GameController>().isPaused)
         {
             return;
         }
         
-        // Check if Key R is Pressed
+        // Check if Key R is Pressed to Reset Player
         if (Input.GetKey(KeyCode.R))
         {
             ResetCube();
         }
         
-        // Check if player is moving or isn't on ground
-        if (isSpawning || isMoving || !isOnGround || isChangingCamera || isElevating)
+        // Check if player is sliding or not
+        if (!isMoving && groundIsIce)
+        {
+            CheckIfToSlide();
+        }
+        
+        // Check if player is spawning or moving or isn't on ground or changing camera
+        if (isSpawning || isMoving || !isOnGround || isChangingCamera || isSliding /*|| isElevating*/)
         {
             return;
         }
         
-        // Check if Key pressed WASD or Arrow keys for movement
-        if ((Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) && !isGroundInFront && !isGroundOnUpperFront)
+        // Check if Key pressed = WASD / Arrow keys, then roll the cube (along side to the current camera)
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
-            FreezeRotationExcept("Z");
-            lastDirection = KeyCode.W;
-            StartCoroutine(Roll(Vector3.left));
+            if (isGroundAbove)
+            {
+                return;
+            }
+            switch (activeCam)
+            {
+                case (1):
+                    if (!isGroundOnFront && !isGroundOnUpperFront)
+                    {
+                        GetMovementWithActiveCamera(Directions.Forward);
+                    }
+                    break;
+                case (2):
+                    if (!isGroundOnRight && !isGroundOnUpperRight)
+                    {
+                        GetMovementWithActiveCamera(Directions.Forward);
+                    }
+                    break;
+                case (3):
+                    if (!isGroundOnBack && !isGroundOnUpperBack)
+                    {
+                        GetMovementWithActiveCamera(Directions.Forward);
+                    }
+                    break;
+                case (4):
+                    if (!isGroundOnLeft && !isGroundOnUpperLeft)
+                    {
+                        GetMovementWithActiveCamera(Directions.Forward);
+                    }
+                    break;
+            }
         }
-        else if ((Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) && !isGroundOnLeft && !isGroundOnUpperLeft)
+        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
-            FreezeRotationExcept("X");
-            lastDirection = KeyCode.A;
-            StartCoroutine(Roll(Vector3.back));
+            if (isGroundAbove)
+            {
+                return;
+            }
+            switch (activeCam)
+            {
+                case (1):
+                    if (!isGroundOnBack && !isGroundOnUpperBack)
+                    {
+                        GetMovementWithActiveCamera(Directions.Backward);
+                    }
+                    break;
+                case (2):
+                    if (!isGroundOnLeft && !isGroundOnUpperLeft)
+                    {
+                        GetMovementWithActiveCamera(Directions.Backward);
+                    }
+                    break;
+                case (3):
+                    if (!isGroundOnFront && !isGroundOnUpperFront)
+                    {
+                        GetMovementWithActiveCamera(Directions.Backward);
+                    }
+                    break;
+                case (4):
+                    if (!isGroundOnRight && !isGroundOnUpperRight)
+                    {
+                        GetMovementWithActiveCamera(Directions.Backward);
+                    }
+                    break;
+            }
         }
-        else if ((Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) && !isGroundOnBack && !isGroundOnUpperBack)
+        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
         {
-            FreezeRotationExcept("Z");
-            lastDirection = KeyCode.S;
-            StartCoroutine(Roll(Vector3.right));
+            if (isGroundAbove)
+            {
+                return;
+            }
+            switch (activeCam)
+            {
+                case (1):
+                    if (!isGroundOnLeft && !isGroundOnUpperLeft)
+                    {
+                        GetMovementWithActiveCamera(Directions.Left);
+                    }
+                    break;
+                case (2):
+                    if (!isGroundOnFront && !isGroundOnUpperFront)
+                    {
+                        GetMovementWithActiveCamera(Directions.Left);
+                    }
+                    break;
+                case (3):
+                    if (!isGroundOnRight && !isGroundOnUpperRight)
+                    {
+                        GetMovementWithActiveCamera(Directions.Left);
+                    }
+                    break;
+                case (4):
+                    if (!isGroundOnBack && !isGroundOnUpperBack)
+                    {
+                        GetMovementWithActiveCamera(Directions.Left);
+                    }
+                    break;
+            }
         }
-        else if ((Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) && !isGroundOnRight && !isGroundOnUpperRight)
+        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
-            FreezeRotationExcept("X");
-            lastDirection = KeyCode.D;
-            StartCoroutine(Roll(Vector3.forward));
+            if (isGroundAbove)
+            {
+                return;
+            }
+            switch (activeCam)
+            {
+                case (1):
+                    if (!isGroundOnRight && !isGroundOnUpperRight)
+                    {
+                        GetMovementWithActiveCamera(Directions.Right);
+                    }
+                    break;
+                case (2):
+                    if (!isGroundOnBack && !isGroundOnUpperBack)
+                    {
+                        GetMovementWithActiveCamera(Directions.Right);
+                    }
+                    break;
+                case (3):
+                    if (!isGroundOnLeft && !isGroundOnUpperLeft)
+                    {
+                        GetMovementWithActiveCamera(Directions.Right);
+                    }
+                    break;
+                case (4):
+                    if (!isGroundOnFront && !isGroundOnUpperFront)
+                    {
+                        GetMovementWithActiveCamera(Directions.Right);
+                    }
+                    break;
+            }
         }
+        
+        // Check if Key pressed = Q / E, then switching camera
         else if (Input.GetKey(KeyCode.Q))
         {
             StartCoroutine(RotateCamera(CameraRotation.Left));
@@ -383,6 +522,8 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(RotateCamera(CameraRotation.Right));
         }
+        
+        // Check if Key pressed = Space bar, then using item
         /*else if (Input.GetKey(KeyCode.Space) && !isUsingItem)
         {
             StartCoroutine(UseItem());
@@ -392,7 +533,12 @@ public class PlayerController : MonoBehaviour
     private void ResetCube()
     {
         transform.localScale = Vector3.zero;
-        currentItem = Items.None;
+        //currentItem = Items.None;
+        isMoving = false;
+        isSliding = false;
+        isOnGround = false;
+        groundIsIce = false;
+        cf.force = Vector3.zero;
         rb.useGravity = false;
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
@@ -408,24 +554,8 @@ public class PlayerController : MonoBehaviour
     {
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
     }
-
-    private void FreezeRotationExcept(string exceptAxis)
-    {
-        switch (exceptAxis)
-        {
-            case ("X"):
-                rb.constraints = RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
-                break;
-            case ("Y"):
-                rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-                break;
-            case ("Z"):
-                rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
-                break;
-        }
-    }
     
-    private void UnlockFreeze()
+    private void UnlockAllFreeze()
     {
         rb.constraints = RigidbodyConstraints.None;
     }
@@ -433,6 +563,9 @@ public class PlayerController : MonoBehaviour
     private IEnumerator SpawnCube()
     {
         isSpawning = true;
+
+        rollCount = 0;
+        UpdateRollCount(rollCount);
         
         var secondToSpawn = 1f;
         var currentTimer = 0f;
@@ -448,13 +581,14 @@ public class PlayerController : MonoBehaviour
         rb.useGravity = true;
         isSpawning = false;
         
-        UnlockFreeze();
+        UnlockAllFreeze();
     }
     
-    // Function to make player roll
+    // Function to make player rolling
     private IEnumerator Roll(Vector3 direction)
     {
         isMoving = true;
+
         var angleToRotate = 90f;
         
         Vector3 rotationCenter = transform.position + direction / 2 + Vector3.down / 2;
@@ -468,47 +602,112 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
         
+        rollCount++;
+        UpdateRollCount(rollCount);
+        
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
+        rb.inertiaTensor = Vector3.zero;
+        rb.inertiaTensorRotation = Quaternion.Euler(Vector3.zero);
         
-        if (!isSliding)
-        {
-            rb.inertiaTensor = Vector3.zero;
-            rb.inertiaTensorRotation = Quaternion.Euler(Vector3.zero);
-            rb.centerOfMass = Vector3.zero;
-            transform.rotation = Quaternion.Euler(Vector3.zero);
-            transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
-            UnlockFreeze();
-            isMoving = false;
-        }
+        transform.rotation = Quaternion.Euler(Vector3.zero);
+        
+        transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
+        isMoving = false;
     }
 
-    private void Sliding()
+    private void CheckIfToSlide()
     {
-        Vector3 direction = Vector3.zero;
-            
-        switch (lastDirection)
+        if (isSliding)
         {
-            case (KeyCode.W):
-                direction = Vector3.left;
-                FreezePositionExcept("X");
-                break;
-            case (KeyCode.A):
-                direction = Vector3.back;
-                FreezePositionExcept("Z");
-                break;
-            case (KeyCode.S):
-                direction = Vector3.right;
-                FreezePositionExcept("X");
-                break;
-            case (KeyCode.D):
-                direction = Vector3.forward;
-                FreezePositionExcept("Z");
-                break;
+            return;
         }
-        
-        FreezeRotation();
-        cf.force = direction * 15f;
+        if (lastDirection != Directions.None)
+        {
+            FreezeRotation();
+            rb.useGravity = false;
+            rb.constraints = RigidbodyConstraints.FreezePositionY;
+            
+            transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y + 0.02f, transform.localPosition.z);
+            
+            isSliding = true;
+            
+            switch (activeCam)
+            {
+                case (1):
+                    if (lastDirection == Directions.Forward)
+                    {
+                        cf.force = Vector3.left * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Backward)
+                    {
+                        cf.force = Vector3.right * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Right)
+                    {
+                        cf.force = Vector3.forward * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Left)
+                    {
+                        cf.force = Vector3.back * slidingSpeed;
+                    }
+                    break;
+                case (2):
+                    if (lastDirection == Directions.Forward)
+                    {
+                        cf.force = Vector3.forward * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Backward)
+                    {
+                        cf.force = Vector3.back * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Right)
+                    {
+                        cf.force = Vector3.right * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Left)
+                    {
+                        cf.force = Vector3.left * slidingSpeed;
+                    }
+                    break;
+                case (3):
+                    if (lastDirection == Directions.Forward)
+                    {
+                        cf.force = Vector3.right * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Backward)
+                    {
+                        cf.force = Vector3.left * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Right)
+                    {
+                        cf.force = Vector3.back * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Left)
+                    {
+                        cf.force = Vector3.forward * slidingSpeed;
+                    }
+                    break;
+                case (4):
+                    if (lastDirection == Directions.Forward)
+                    {
+                        cf.force = Vector3.back * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Backward)
+                    {
+                        cf.force = Vector3.forward * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Right)
+                    {
+                        cf.force = Vector3.left * slidingSpeed;
+                    }
+                    else if (lastDirection == Directions.Left)
+                    {
+                        cf.force = Vector3.right * slidingSpeed;
+                    }
+                    break;
+            }
+        }
     }
     
     /*private IEnumerator UseItem()
@@ -537,29 +736,13 @@ public class PlayerController : MonoBehaviour
         currentItem = Items.None;
         isUsingItem = false;
     }*/
-
-    private void FreezePositionExcept(string exceptAxis)
-    {
-        switch (exceptAxis)
-        {
-            case ("X"):
-                rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezePositionZ;
-                break;
-            case ("Y"):
-                rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ;
-                break;
-            case ("Z"):
-                rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionY;
-                break;
-        }
-    }
     
     // Function to rotate side camera
     private IEnumerator RotateCamera(CameraRotation side)
     {
         isChangingCamera = true;
         
-        var timeToRotate = 1f;
+        var timeToRotate = mainCam.m_DefaultBlend.BlendTime;
         var timer = 0f;
         
         virtualCam1.SetActive(false);
@@ -620,7 +803,97 @@ public class PlayerController : MonoBehaviour
 
         isChangingCamera = false;
     }
+    
+    // Convert the input into the right movement even after camera rotated
+    private void GetMovementWithActiveCamera(Directions direction)
+    {
+        if (isMoving)
+        {
+            return;
+        }
+        lastDirection = direction;
+        switch (activeCam)
+        {
+            case (1):
+                if (direction == Directions.Forward)
+                {
+                    StartCoroutine(Roll(Vector3.left));
+                }
+                else if (direction == Directions.Backward)
+                {
+                    StartCoroutine(Roll(Vector3.right));
+                }
+                else if (direction == Directions.Left)
+                {
+                    StartCoroutine(Roll(Vector3.back));
+                }
+                else if (direction == Directions.Right)
+                {
+                    StartCoroutine(Roll(Vector3.forward));
+                }
+                break;
+            case (2):
+                if (direction == Directions.Forward)
+                {
+                    StartCoroutine(Roll(Vector3.forward));
+                }
+                else if (direction == Directions.Backward)
+                {
+                    StartCoroutine(Roll(Vector3.back));
+                }
+                else if (direction == Directions.Left)
+                {
+                    StartCoroutine(Roll(Vector3.left));
+                }
+                else if (direction == Directions.Right)
+                {
+                    StartCoroutine(Roll(Vector3.right));
+                }
+                break;
+            case (3):
+                if (direction == Directions.Forward)
+                {
+                    StartCoroutine(Roll(Vector3.right));
+                }
+                else if (direction == Directions.Backward)
+                {
+                    StartCoroutine(Roll(Vector3.left));
+                }
+                else if (direction == Directions.Left)
+                {
+                    StartCoroutine(Roll(Vector3.forward));
+                }
+                else if (direction == Directions.Right)
+                {
+                    StartCoroutine(Roll(Vector3.back));
+                }
+                break;
+            case (4):
+                if (direction == Directions.Forward)
+                {
+                    StartCoroutine(Roll(Vector3.back));
+                }
+                else if (direction == Directions.Backward)
+                {
+                    StartCoroutine(Roll(Vector3.forward));
+                }
+                else if (direction == Directions.Left)
+                {
+                    StartCoroutine(Roll(Vector3.right));
+                }
+                else if (direction == Directions.Right)
+                {
+                    StartCoroutine(Roll(Vector3.left));
+                }
+                break;
+        }
+    }
 
+    private void UpdateRollCount(int rollCount)
+    {
+        rollCountText.text = $"Rolls: {rollCount}";
+    }
+    
     /*private IEnumerator Elevate()
     {
         if (!isMoving)
