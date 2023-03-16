@@ -5,6 +5,7 @@ Unity Editor 2021.3.17f1
 Packages:
 - 2D Tile*
 - 2D Tile Extra*
+- 2D Sprite
 - Cinemachine
 - TextMeshPro
 
