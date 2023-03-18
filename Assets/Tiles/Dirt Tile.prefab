@@ -109,6 +109,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dirt 01
       objectReference: {fileID: 0}
+    - target: {fileID: 1219471545100730, guid: 48dc5a6414b88ac47ad313a18fbf41bd, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 4562075604489022, guid: 48dc5a6414b88ac47ad313a18fbf41bd, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -157,7 +161,12 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 65910483985868152, guid: 48dc5a6414b88ac47ad313a18fbf41bd, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 65910483985868152, guid: 48dc5a6414b88ac47ad313a18fbf41bd, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 48dc5a6414b88ac47ad313a18fbf41bd, type: 3}
 --- !u!4 &8313993450879596516 stripped
 Transform:

@@ -12,10 +12,9 @@ GameObject:
   - component: {fileID: 3408387439014120878}
   - component: {fileID: 3408387439014120879}
   - component: {fileID: 3408387439014120872}
-  - component: {fileID: 7198505257098079104}
   m_Layer: 3
-  m_Name: Elevetor Trigger Tile
-  m_TagString: Elevator
+  m_Name: Teleporter Trigger Tile
+  m_TagString: Teleporter
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -98,20 +97,6 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7198505257098079104
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3408387439014120873}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c86353611b1731a4f825e7dde23454b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pc: {fileID: 0}
-  elevatorPosition: {fileID: 8486485025136602102}
 --- !u!1 &3408387439535604398
 GameObject:
   m_ObjectHideFlags: 0
@@ -125,7 +110,7 @@ GameObject:
   - component: {fileID: 3408387439535604403}
   - component: {fileID: 3408387439535604396}
   m_Layer: 0
-  m_Name: Elevator Tile
+  m_Name: Teleporter Tile
   m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -291,7 +276,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1219471545100730, guid: d52eb6ca5ef43f149a8c3f91301e524d, type: 3}
       propertyPath: m_Name
-      value: Elevetor 01
+      value: Teleporter 01
       objectReference: {fileID: 0}
     - target: {fileID: 1219471545100730, guid: d52eb6ca5ef43f149a8c3f91301e524d, type: 3}
       propertyPath: m_TagString
