@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8985390574262249076}
   - component: {fileID: 8985390574262249077}
   m_Layer: 3
-  m_Name: SlipStopper
+  m_Name: SlipDropper Tile
   m_TagString: SlipStopper
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
