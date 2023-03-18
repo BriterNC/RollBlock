@@ -10,3 +10,4 @@ Packages:
 - TextMeshPro
 
 *Using Object Brush with Tiles (using offset Y = -0.5)
+*Use offset Y = -1 & Z = -0.5 for Spawner Tile
