@@ -54,6 +54,7 @@ public class PlayerController : MonoBehaviour
     
     // Sliding Variables
     [SerializeField] private Directions lastDirection = Directions.None;
+    [SerializeField] private bool isDropOffFromIce, isInDroppingTile;
     //[SerializeField] private FixedAxisDirections lockedDirection = FixedAxisDirections.None;
     /*private enum FixedAxisDirections
     {
@@ -114,6 +115,11 @@ public class PlayerController : MonoBehaviour
             ResetCube();
             return;
         }
+
+        if (other.CompareTag("SlipDropper"))
+        {
+            isInDroppingTile = true;
+        }
         
         if (other.CompareTag("Teleporter"))
         {
@@ -136,6 +142,7 @@ public class PlayerController : MonoBehaviour
             {
                 disabledMovementInput = true;
             }
+            //isDropOffFromIce = false;
             groundIsIce = true;
             /*if (lockedDirection == FixedAxisDirections.None)
             {
@@ -247,6 +254,7 @@ public class PlayerController : MonoBehaviour
             isSliding = false;
             UnlockAllFreeze();
             groundIsIce = false;
+            isDropOffFromIce = false;
         }
     }
 
@@ -265,6 +273,18 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("Teleport 2 Activated");
                 teleporter2IsActive = false;
             }
+        }
+
+        if (other.CompareTag("SlipDropper"))
+        {
+            isInDroppingTile = false;
+            isDropOffFromIce = true;
+            isSliding = false;
+            groundIsIce = false;
+            cf.force = Vector3.zero;
+            rb.useGravity = true;
+            UnlockAllFreeze();
+            FreezeRotation("X", "Z");
         }
     }
 
@@ -376,19 +396,37 @@ public class PlayerController : MonoBehaviour
             {
                 isOnGround = true;
                 isFalling = false;
+                if (!isInDroppingTile)
+                {
+                    isDropOffFromIce = false;
+                }
             }
             else
             {
                 isOnGround = false;
                 isFalling = true;
-                lastDirection = Directions.None;
+                if (isDropOffFromIce || isInDroppingTile)
+                {
+                    return;
+                }
+                if (!isInDroppingTile || !isDropOffFromIce)
+                {
+                    lastDirection = Directions.None;
+                }
             }
         }
         else
         {
             isOnGround = false;
             isFalling = true;
-            lastDirection = Directions.None;
+            if (isDropOffFromIce || isInDroppingTile)
+            {
+                return;
+            }
+            if (!isInDroppingTile || !isDropOffFromIce)
+            {
+                lastDirection = Directions.None;
+            }
         }
         
         if (Physics.Raycast(positionRoundedYAxis, ray6, out _hit, 0.5f))
@@ -479,8 +517,13 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (groundIsIce)
+        {
+            isDropOffFromIce = false;
+        }
+
         // Check if player is sliding or not
-        if (!isRolling && groundIsIce)
+        if (!isRolling && groundIsIce /*|| !isRolling && groundIsIce && isDropOffFromIce*/)
         {
             CheckIfToSlide();
         }
@@ -716,6 +759,44 @@ public class PlayerController : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
     }
     
+    private void FreezeRotation(string axis)
+    {
+        if (axis == "X")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX;
+        }
+        else if (axis == "Y")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationY;
+        }
+        else if (axis == "Z")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationZ;
+        }
+    }
+    
+    private void FreezeRotation(string axis1, string axis2)
+    {
+        if (axis1 == axis2)
+        {
+            Debug.Log("There's the same axis!");
+            return;
+        }
+        
+        if (axis1 == "X" && axis1 == "Y")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
+        }
+        else if (axis1 == "X" && axis2 == "Z")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+        else if (axis1 == "Y" && axis2 == "Z")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+        }
+    }
+    
     private void UnlockAllFreeze()
     {
         rb.constraints = RigidbodyConstraints.None;
@@ -810,7 +891,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
         
-        if (lastDirection != Directions.None)
+        if (lastDirection != Directions.None /*|| isDropOffFromIce && groundIsIce && isFalling && !isSliding*/)
         {
             FreezeRotation();
             rb.useGravity = false;

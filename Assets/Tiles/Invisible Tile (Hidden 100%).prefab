@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8772026412259615941}
   - component: {fileID: 8772026412259615946}
   m_Layer: 3
-  m_Name: Invisible Tile
+  m_Name: Invisible Tile (Hidden 100%)
   m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

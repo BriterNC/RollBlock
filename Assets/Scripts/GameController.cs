@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 public class GameController : MonoBehaviour
 {
     [SerializeField] private CinemachineVirtualCamera cam0, cam1;
-    [SerializeField] private GameObject pauseUI, player, invisibleTile;
+    [SerializeField] private GameObject pauseUI, player, invisibleTile, instruction;
     [SerializeField] private RectTransform title, GUI;
     [SerializeField] public bool isPaused, hiding, despawning;
     
@@ -33,6 +33,11 @@ public class GameController : MonoBehaviour
                 pauseUI.SetActive(false);
                 Time.timeScale = 1;
             }
+        }
+
+        if (instruction.gameObject.activeSelf)
+        {
+            Debug.Log("Instruction is active.");
         }
     }
 
@@ -73,6 +78,7 @@ public class GameController : MonoBehaviour
         
         title.rotation = Quaternion.Euler(new Vector3(angleToRotate, 0, 0));
         GUI.gameObject.SetActive(true);
+        instruction.gameObject.SetActive(true);
         
         title.gameObject.SetActive(false);
     }
