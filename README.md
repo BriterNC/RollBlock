@@ -3,8 +3,7 @@
 
 This is a game project was my by UnrefinedArt, a student developer group from Bangkok University.
 
-> Class Physics for Game (GI203).
-
+> Physics for Game (GI203)
 
 ### Unity Editor & Packages:
 
