@@ -57,7 +57,10 @@ public class GameController : MonoBehaviour
                 pauseUI.SetActive(true);
                 Time.timeScale = 0;
                 GUI.gameObject.SetActive(false);
-                instruction.SetActive(false);
+                if (isTutorial)
+                {
+                    instruction.SetActive(false);
+                }
             }
             else if (isPaused)
             {
@@ -65,7 +68,10 @@ public class GameController : MonoBehaviour
                 pauseUI.SetActive(false);
                 Time.timeScale = 1;
                 GUI.gameObject.SetActive(true);
-                instruction.SetActive(true);
+                if (isTutorial)
+                {
+                    instruction.SetActive(true);
+                }
             }
         }
         
