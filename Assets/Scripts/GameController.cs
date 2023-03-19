@@ -465,6 +465,7 @@ public class GameController : MonoBehaviour
                 else if (tutorialPhrase == 32)
                 {
                     instructionText.text = "Go activate Teleporter\nand have a look!\nThere's a new destination.";
+                    blockInputSpace = true;
 
                     if ((teleporter1IsActive || teleporter2IsActive) && Input.GetKey(KeyCode.Space))
                     {

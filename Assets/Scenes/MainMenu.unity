@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.14525941, g: 0.30296904, b: 0.41806674, a: 1}
+  m_IndirectSpecularColor: {r: 0.14344269, g: 0.2992033, b: 0.41289437, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -9948,9 +9948,9 @@ Transform:
   - {fileID: 261125318}
   - {fileID: 238967873}
   - {fileID: 1642794727}
-  - {fileID: 1310422268}
   - {fileID: 688536457}
   - {fileID: 1746740805}
+  - {fileID: 1310422268}
   - {fileID: 123538672}
   - {fileID: 1432594775}
   - {fileID: 1361186442}
@@ -10588,25 +10588,25 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 824310169}
+  - {fileID: 937196743}
   - {fileID: 2074102291}
   - {fileID: 1772212342}
-  - {fileID: 796665849}
   - {fileID: 1625393247}
-  - {fileID: 2073189889}
+  - {fileID: 796665849}
   - {fileID: 1767301312}
-  - {fileID: 468790344}
-  - {fileID: 824310169}
   - {fileID: 1536401692}
+  - {fileID: 468790344}
+  - {fileID: 2073189889}
   - {fileID: 158844029}
-  - {fileID: 937196743}
   - {fileID: 534961041}
-  - {fileID: 1766926924}
-  - {fileID: 762226740}
   - {fileID: 1468195867}
+  - {fileID: 762226740}
   - {fileID: 1291747849}
   - {fileID: 1832875936}
   - {fileID: 1375500359}
   - {fileID: 1927438967}
+  - {fileID: 1766926924}
   - {fileID: 186992825}
   - {fileID: 1621858973}
   - {fileID: 456589638}
@@ -15745,6 +15745,10 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: Credits
       objectReference: {fileID: 0}
+    - target: {fileID: 4403433345342357087, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4403433345405991196, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -15756,6 +15760,10 @@ PrefabInstance:
     - target: {fileID: 4403433346011162002, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: StartGame
+      objectReference: {fileID: 0}
+    - target: {fileID: 4403433346011162012, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4403433346625363490, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
       propertyPath: m_Pivot.x
@@ -15844,6 +15852,10 @@ PrefabInstance:
     - target: {fileID: 4403433346625363502, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
       propertyPath: m_Name
       value: Canvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 4403433346792882059, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4403433347021537456, guid: f6e4c4b7ebd320e42affde758424f0dc, type: 3}
       propertyPath: m_IsActive
