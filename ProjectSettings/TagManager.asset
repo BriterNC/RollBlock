@@ -10,6 +10,7 @@ TagManager:
   - SlipDropper
   - Teleporter
   - Fallout
+  - Hole
   layers:
   - Default
   - TransparentFX

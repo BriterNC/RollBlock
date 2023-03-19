@@ -11,7 +11,7 @@ public class TransparentTileOpacityController : MonoBehaviour
     [SerializeField] private float alpha;
     [SerializeField] private float maxOpacity = 0.5f;
     [SerializeField] private float distantToHide = 0.5f;
-    [SerializeField] private float distantToShow = 4.5f;
+    [SerializeField] private float distantToShow = 5.5f;
     
     private void Awake()
     {
