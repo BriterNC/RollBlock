@@ -3,9 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -54,6 +52,7 @@ public class PlayerController : MonoBehaviour
     
     // Sliding Variables
     [SerializeField] private Directions lastDirection = Directions.None;
+    [SerializeField] private bool isDropOffFromIce, isInDroppingTile;
     //[SerializeField] private FixedAxisDirections lockedDirection = FixedAxisDirections.None;
     /*private enum FixedAxisDirections
     {
@@ -68,8 +67,8 @@ public class PlayerController : MonoBehaviour
     
     // Item Variables
     [SerializeField] private Items currentItem;
-    [SerializeField] private GameObject teleporter1, teleporter2;
-    [SerializeField] private bool teleporter1IsActive, teleporter2IsActive;
+    [SerializeField] public bool isOnTeleporterTile, isTeleporting;
+    [SerializeField] public GameObject currentTeleporterTile; 
     private enum Items
     {
         None, //0
@@ -81,6 +80,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject virtualCam1, virtualCam2, virtualCam3, virtualCam4;
     [SerializeField] private int activeCam = 1;
     [SerializeField] private bool isChangingCamera;
+    
+    // Game Variable
+    [SerializeField] private GameController gc;
+
     private enum CameraRotation
     {
         Left,
@@ -98,35 +101,52 @@ public class PlayerController : MonoBehaviour
         ray5 = raycastLocker.TransformDirection(Vector3.down) * 0.5f;
         ray6 = raycastLocker.TransformDirection(Vector3.up) * 0.5f;
         
-        // Get Components from Player Cube then Spawn Player
+        // Get GameController
+        gc = GameObject.FindWithTag("GameController").GetComponent<GameController>();
+        
+        // Get Player components
         rb = GetComponent<Rigidbody>();
         cf = GetComponent<ConstantForce>();
         transform.localScale = Vector3.zero;
         currentItem = Items.None;
+        isOnTeleporterTile = false;
         StartCoroutine(SpawnCube(Vector3.zero));
     }
-    
+
     // Check Ice / SlipStopper trigger for slippery movement
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Fallout"))
         {
+            gc.fallCount++;
+            
             ResetCube();
             return;
+        }
+        
+        if (other.CompareTag("Hole"))
+        {
+            Debug.Log("Player entered a hole");
+            gc.LoadNextScene();
+        }
+
+        if (other.CompareTag("SlipDropper"))
+        {
+            isInDroppingTile = true;
         }
         
         if (other.CompareTag("Teleporter"))
         {
             currentItem = Items.Teleporter;
-            if (other.gameObject == teleporter1)
+            isOnTeleporterTile = true;
+            
+            if (other.gameObject == gc.teleporter1.transform.GetChild(0).gameObject)
             {
-                Debug.Log("Teleport 1 Activated");
-                teleporter1IsActive = true;
+                gc.teleporter1IsActive = true;
             }
-            else if (other.gameObject == teleporter2)
+            else if (other.gameObject == gc.teleporter2.transform.GetChild(0).gameObject)
             {
-                Debug.Log("Teleport 2 Activated");
-                teleporter2IsActive = true;
+                gc.teleporter2IsActive = true;
             }
         }
         
@@ -136,6 +156,7 @@ public class PlayerController : MonoBehaviour
             {
                 disabledMovementInput = true;
             }
+            //isDropOffFromIce = false;
             groundIsIce = true;
             /*if (lockedDirection == FixedAxisDirections.None)
             {
@@ -247,6 +268,7 @@ public class PlayerController : MonoBehaviour
             isSliding = false;
             UnlockAllFreeze();
             groundIsIce = false;
+            isDropOffFromIce = false;
         }
     }
 
@@ -254,17 +276,22 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("Teleporter"))
         {
+            isOnTeleporterTile = false;
+            gc.teleporter1IsActive = false;
+            gc.teleporter2IsActive = false;
             currentItem = Items.None;
-            if (other.gameObject == teleporter1)
-            {
-                Debug.Log("Teleport 1 Activated");
-                teleporter1IsActive = false;
-            }
-            else if (other.gameObject == teleporter2)
-            {
-                Debug.Log("Teleport 2 Activated");
-                teleporter2IsActive = false;
-            }
+        }
+        
+        if (other.CompareTag("SlipDropper"))
+        {
+            isInDroppingTile = false;
+            isDropOffFromIce = true;
+            isSliding = false;
+            groundIsIce = false;
+            cf.force = Vector3.zero;
+            rb.useGravity = true;
+            UnlockAllFreeze();
+            FreezeRotation("X", "Z");
         }
     }
 
@@ -376,19 +403,37 @@ public class PlayerController : MonoBehaviour
             {
                 isOnGround = true;
                 isFalling = false;
+                if (!isInDroppingTile)
+                {
+                    isDropOffFromIce = false;
+                }
             }
             else
             {
                 isOnGround = false;
                 isFalling = true;
-                lastDirection = Directions.None;
+                if (isDropOffFromIce || isInDroppingTile)
+                {
+                    return;
+                }
+                if (!isInDroppingTile || !isDropOffFromIce)
+                {
+                    lastDirection = Directions.None;
+                }
             }
         }
         else
         {
             isOnGround = false;
             isFalling = true;
-            lastDirection = Directions.None;
+            if (isDropOffFromIce || isInDroppingTile)
+            {
+                return;
+            }
+            if (!isInDroppingTile || !isDropOffFromIce)
+            {
+                lastDirection = Directions.None;
+            }
         }
         
         if (Physics.Raycast(positionRoundedYAxis, ray6, out _hit, 0.5f))
@@ -473,14 +518,19 @@ public class PlayerController : MonoBehaviour
             isGroundOnUpperLeft = false;
         }
 
+        if (groundIsIce)
+        {
+            isDropOffFromIce = false;
+        }
+        
         // Check if the game is paused
-        if (GameObject.FindWithTag("GameController").GetComponent<GameController>().isPaused)
+        if (gc.isPaused)
         {
             return;
         }
 
         // Check if player is sliding or not
-        if (!isRolling && groundIsIce)
+        if (!isRolling && groundIsIce /*|| !isRolling && groundIsIce && isDropOffFromIce*/)
         {
             CheckIfToSlide();
         }
@@ -488,6 +538,11 @@ public class PlayerController : MonoBehaviour
         // Check if Key R is Pressed to Reset Player
         if (Input.GetKey(KeyCode.R) && !isRolling)
         {
+            if (gc.blockInputR)
+            {
+                return;
+            }
+            
             if (isSpawning)
             {
                 return;
@@ -505,10 +560,16 @@ public class PlayerController : MonoBehaviour
         // Check if Key pressed = WASD / Arrow keys, then roll the cube (along side to the current camera)
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
+            if (gc.blockInputWASD)
+            {
+                return;
+            }
+            
             if (isGroundOnAbove || isSliding || isFalling || isSpawning || isRolling || disabledMovementInput)
             {
                 return;
             }
+            
             switch (activeCam)
             {
                 case (1):
@@ -539,10 +600,16 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
+            if (gc.blockInputWASD)
+            {
+                return;
+            }
+            
             if (isGroundOnAbove || isSliding || isFalling || isSpawning || isRolling || disabledMovementInput)
             {
                 return;
             }
+            
             switch (activeCam)
             {
                 case (1):
@@ -573,10 +640,16 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
         {
+            if (gc.blockInputWASD)
+            {
+                return;
+            }
+            
             if (isGroundOnAbove || isSliding || isFalling || isSpawning || isRolling || disabledMovementInput)
             {
                 return;
             }
+            
             switch (activeCam)
             {
                 case (1):
@@ -607,10 +680,16 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
+            if (gc.blockInputWASD)
+            {
+                return;
+            }
+            
             if (isGroundOnAbove || isSliding || isFalling || isSpawning || isRolling || disabledMovementInput)
             {
                 return;
             }
+            
             switch (activeCam)
             {
                 case (1):
@@ -643,41 +722,61 @@ public class PlayerController : MonoBehaviour
         // Check if Key pressed = Q / E, then switching camera
         else if (Input.GetKey(KeyCode.Q) && !isRolling)
         {
+            if (gc.blockInputQE)
+            {
+                return;
+            }
+            
             if (isSliding)
             {
                 return; //Temporary
             }
+            
             if (initialedRollOnCam == 0)
             {
                 initialedRollOnCam = activeCam;
             }
+            
             StartCoroutine(RotateCamera(CameraRotation.Left));
         }
         else if (Input.GetKey(KeyCode.E) && !isRolling)
         {
+            if (gc.blockInputQE)
+            {
+                return;
+            }
+
             if (isSliding)
             {
                 return; //Temporary
             }
+            
             if (initialedRollOnCam == 0)
             {
                 initialedRollOnCam = activeCam;
             }
+            
             StartCoroutine(RotateCamera(CameraRotation.Right));
         }
         
         // Check if Key pressed = Space bar, then using item
         else if (Input.GetKey(KeyCode.Space))
         {
+            if (gc.blockInputSpace)
+            {
+                return;
+            }
+            
             if (isRolling || isUsingItem)
             {
                 return;
             }
+            
             StartCoroutine(UseItem());
         }
     }
 
-    private void ResetCube()
+    public void ResetCube()
     {
         rollCount = 0;
         transform.localScale = Vector3.zero;
@@ -714,6 +813,44 @@ public class PlayerController : MonoBehaviour
     private void FreezeRotation()
     {
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+    }
+    
+    private void FreezeRotation(string axis)
+    {
+        if (axis == "X")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX;
+        }
+        else if (axis == "Y")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationY;
+        }
+        else if (axis == "Z")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationZ;
+        }
+    }
+    
+    private void FreezeRotation(string axis1, string axis2)
+    {
+        if (axis1 == axis2)
+        {
+            Debug.Log("There's the same axis!");
+            return;
+        }
+        
+        if (axis1 == "X" && axis1 == "Y")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
+        }
+        else if (axis1 == "X" && axis2 == "Z")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+        else if (axis1 == "Y" && axis2 == "Z")
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+        }
     }
     
     private void UnlockAllFreeze()
@@ -790,9 +927,11 @@ public class PlayerController : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             rb.inertiaTensor = Vector3.zero;
             rb.inertiaTensorRotation = Quaternion.Euler(Vector3.zero);
-        
+            
+            Vector3 pos = transform.localPosition;
+            
             transform.rotation = Quaternion.Euler(Vector3.zero);
-            transform.localPosition = new Vector3(Mathf.RoundToInt(transform.localPosition.x), Mathf.RoundToInt(transform.localPosition.y), Mathf.RoundToInt(transform.localPosition.z));
+            transform.localPosition = new Vector3(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), Mathf.RoundToInt(pos.z));
         
             initialedRollOnCam = 0;
             isRolling = false;
@@ -810,7 +949,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
         
-        if (lastDirection != Directions.None)
+        if (lastDirection != Directions.None /*|| isDropOffFromIce && groundIsIce && isFalling && !isSliding*/)
         {
             FreezeRotation();
             rb.useGravity = false;
@@ -924,7 +1063,7 @@ public class PlayerController : MonoBehaviour
         switch (currentItem)
         {
             case (Items.None):
-                Debug.Log("No Item Owned");
+                Debug.Log("No item found");
                 break;
             case (Items.Teleporter):
                 if (!isOnGround || isRolling)
@@ -933,14 +1072,14 @@ public class PlayerController : MonoBehaviour
                     yield break;
                 }
                 
-                Debug.Log("Item Teleporter Will Be Used");
-                if (teleporter1IsActive)
+                Debug.Log("Using Teleporter");
+                if (gc.teleporter1IsActive)
                 {
-                    TeleportCube(teleporter2.transform.position - new Vector3(0.5f,0,0.5f));
+                    TeleportCube(gc.teleporter2.transform.GetChild(0).transform.position - new Vector3(0.5f,0,0.5f));
                 }
-                else if (teleporter2IsActive)
+                else if (gc.teleporter2IsActive)
                 {
-                    TeleportCube(teleporter1.transform.position - new Vector3(0.5f,0,0.5f));
+                    TeleportCube(gc.teleporter1.transform.GetChild(0).transform.position - new Vector3(0.5f,0,0.5f));
                 }
                 break;
         }
