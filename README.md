@@ -25,7 +25,7 @@ This is a game project was my by UnrefinedArt, a student developer group from Ba
 - 1640706469 Pongpop Sootpong (Section 229A No.37)
 
 ### Available on platforms:
-- [itch.io]
+- [itch.io] (Demo)
 
 [^1]: Using Object Brush with Tiles (using offset Y = -0.5)
 
